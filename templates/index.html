@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PDF to DOCX Converter</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+    #drop-area {
+        border: 2px dashed #3498db;
+        padding: 20px;
+        width: 50%;
+        margin: auto;
+    }
+    #file-input { display: none; }
+    .btn {
+        background-color: #3498db;
+        color: white;
+        padding: 10px 20px;
+        margin-top: 10px;
+        cursor: pointer;
+        border: none;
+        border-radius: 5px;
+    }
+    .hidden { display: none; }
+    #loading { margin-top: 10px; color: #3498db; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <h2>PDF to DOCX Converter</h2>
+  <div id="drop-area">
+    <p>Drag and drop a PDF file here or click to select a file.</p>
+    <input type="file" id="file-input" accept="application/pdf">
+    <button class="btn" onclick="document.getElementById('file-input').click()">Select File</button>
+    <p id="selected-filename"></p>
+    <button id="convert-btn" class="btn hidden">Convert</button>
+    <p id="loading" class="hidden">Converting... Please wait.</p>
+    <a id="download-link" class="btn hidden" download>Download DOCX</a>
+  </div>
+
+  <script>
+    let selectedFile = null;
+
+    document.getElementById("file-input").addEventListener("change", function(event) {
+      selectedFile = event.target.files[0];
+      if (selectedFile) {
+        document.getElementById("selected-filename").textContent = "Selected: " + selectedFile.name;
+        document.getElementById("convert-btn").classList.remove("hidden");
+        document.getElementById("download-link").classList.add("hidden");
+      }
+    });
+
+    document.getElementById("convert-btn").addEventListener("click", function() {
+      if (!selectedFile) return;
+
+      let formData = new FormData();
+      formData.append("file", selectedFile);
+
+      document.getElementById("loading").classList.remove("hidden");
+      document.getElementById("convert-btn").classList.add("hidden");
+
+      fetch("/upload", {
+        method: "POST",
+        body: formData,
+      })
+      .then(response => response.blob())
+      .then(blob => {
+        const downloadLink = document.getElementById("download-link");
+        downloadLink.href = URL.createObjectURL(blob);
+        downloadLink.download = selectedFile.name.replace(".pdf", ".docx");
+        downloadLink.classList.remove("hidden");
+        document.getElementById("loading").classList.add("hidden");
+      })
+      .catch(error => {
+        console.error("Conversion error:", error);
+        alert("Conversion failed. Please try again.");
+        document.getElementById("loading").classList.add("hidden");
+      });
+    });
+  </script>
+
+</body>
+</html>
